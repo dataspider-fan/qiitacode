@@ -70,6 +70,34 @@ public class HelloWorldAdapterOperation implements Operation {
 		String result = Numeric.toHexString(txnExt.getConstantResult(0).toByteArray());
 		log.info("getBalance : " + FunctionReturnDecoder.decode(result, balanceOf.getOutputParameters()).get(0).getValue());
 
+		
+		/*
+		 * スマートコントラクトの関数呼び出し（ローカル環境の参照系呼び出し）
+		 */
+		// Private network wrapperの生成
+		// ApiWrapper( gRPC FullNode, gRPC SolidityNode, private key)
+		// Docker起動時の50051と50052ポートを指定
+		ApiWrapper wrapper_local =  new ApiWrapper("127.0.0.1:50051", "127.0.0.1:50052", "");
+
+		// MyTokenをデプロイしたアドレスの秘密鍵をKeyPairメソッドに渡す
+		KeyPair keyPair_local = new KeyPair("e26d5a9e94aea8e35b6b2668c298d01fe09c2490c47d242eb4cfd036188f0b51");
+
+		// MyTokenの残高（balanceOf）を取得するアドレスを変数に格納する
+		String ownerAddr_local = keyPair_local.toBase58CheckAddress();
+
+		// 上記、MyTokenのデプロイ後のスマートコントラクトアドレスを指定する
+		String cntrAddr_local = "TEQw51ck1JUja28JQ4Yg8fZsYMM1eXAmLe";
+
+		// getBalance関数の呼び出し
+		Function balanceOf_local = new Function("balanceOf",
+		Arrays.asList(new Address(ownerAddr_local)), Arrays.asList(new TypeReference<Uint256>() {}));
+
+		// getBalanceの取得結果を実行ログに表示
+		TransactionExtention txnExt_local = wrapper_local.constantCall(ownerAddr_local, cntrAddr_local, balanceOf_local);
+		String result_local = Numeric.toHexString(txnExt_local.getConstantResult(0).toByteArray());
+		log.info("balanceOf : " + FunctionReturnDecoder.decode(result_local, balanceOf_local.getOutputParameters()).get(0).getValue());
+
+		
 		return new HashMap();
 	}
 
